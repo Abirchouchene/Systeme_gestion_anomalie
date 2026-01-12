@@ -1,0 +1,39 @@
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+
+server:
+  port: 8090
+spring:
+  rabbitmq:
+    host: 192.168.10.161
+    port: 5672
+    username: uptech
+    password: uptech
+  application:
+    name: surveillance
+  datasource:
+    url: jdbc:mysql://192.168.10.161:3306/surveillance?useUnicode=true&useJDBCCompliantTimezoneShift=true&createDatabaseIfNotExist=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+    username: root
+    password: root
+    hikari:
+      data-source-properties:
+        serverTimezone: UTC
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+  jackson:
+    time-zone: UTC
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
