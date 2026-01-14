@@ -12,16 +12,13 @@ spring:
         locator:
           enabled: true
       routes:
-        - id: students
+        - id: surveillance
           uri: http://localhost:8090
           predicates:
-            - Path=/api/v1/students/**
-        - id: schools
+            - Path=/api/v1/surveillance/**
+        - id: maintenance
           uri: http://localhost:8070
           predicates:
-            - Path=/api/v1/schools/**
+            - Path=/api/v1/maintenance/**
 
-management:
-  tracing:
-    sampling:
-      probability: 1.0
+

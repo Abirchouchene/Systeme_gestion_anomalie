@@ -9,6 +9,35 @@ eureka:
 server:
   port: 8070
 spring:
+  rabbitmq:
+    host: 192.168.10.161
+    port: 5672
+    username: uptech
+    password: uptech
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "http://192.168.10.161:8080/realms/Portal"
+          jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
+  springdoc:
+    default-produces-media-type: application/json
+
+  keycloak:
+    auth-server-url: http://192.168.10.161:8080
+    realm: Portal
+    client-id: surveillance_maintenanceID
+    client-secret: 1UxvppP6uUXdaf4H4vV0i8WAseaRnT3B
+
+
+
+  jwt:
+    auth:
+      converter:
+        principle-attribute: preferred_username
+        resource-id: surveillance_maintenanceID
+
   application:
     name: maintenance
   datasource:
@@ -33,6 +62,6 @@ application:
     students-url: http://localhost:8222/api/v1/students
 
 management:
-  tracing:
-    sampling:
-      probability: 1.0
+  zipkin:
+    tracing:
+      enabled: false

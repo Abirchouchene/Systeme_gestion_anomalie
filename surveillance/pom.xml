@@ -7,8 +7,9 @@
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.1.8</version>
 		<relativePath/> <!-- lookup parent from repository -->
+
 	</parent>
-	<groupId>com.alibou</groupId>
+	<groupId>tn.itbs</groupId>
 	<artifactId>surveillance</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>surveillance</name>
@@ -21,6 +22,11 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.3.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.mysql</groupId>

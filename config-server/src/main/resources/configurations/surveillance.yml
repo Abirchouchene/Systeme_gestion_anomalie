@@ -34,6 +34,6 @@ spring:
     time-zone: UTC
 
 management:
-  tracing:
-    sampling:
-      probability: 1.0
+  zipkin:
+    tracing:
+      enabled: false
