@@ -1,0 +1,115 @@
+<mat-card class="cardWithShadow mb-4">
+  <mat-card-content>
+    <div class="row justify-content-between align-items-center mb-3">
+      <div class="col-sm-4">
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput placeholder="Rechercher Demande" (keyup)="onKeyUp($event)" />
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </div>
+      <div class="col-sm-4 d-flex justify-content-end">
+        <a mat-button [routerLink]="['/apps/addInvoice']" mat-flat-button color="primary">Ajouter Demande</a>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<mat-card class="cardWithShadow">
+  <mat-card-content>
+    <div class="table-responsive">
+      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8 w-100">
+
+        <!-- ID Column -->
+        <ng-container matColumnDef="idR">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
+          <td mat-cell *matCellDef="let element"> {{element.idR}} </td>
+        </ng-container>
+
+        <!-- Created At Column -->
+        <ng-container matColumnDef="createdAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Créé le</th>
+          <td mat-cell *matCellDef="let element">{{ formatFullDate(element.createdAt) }}</td>
+        </ng-container>
+
+        <!-- Deadline Column -->
+        <ng-container matColumnDef="deadline">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Date Limite</th>
+          <td mat-cell *matCellDef="let element">{{ element.deadline | date: 'shortDate' }}</td>
+        </ng-container>
+
+        <!-- Category Column -->
+        <ng-container matColumnDef="categoryRequest">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Catégorie</th>
+          <td mat-cell *matCellDef="let element"> {{element.categoryRequest}} </td>
+        </ng-container>
+
+        <!-- Priority Column -->
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Priorité</th>
+          <td mat-cell *matCellDef="let element"> {{element.priority}} </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Statut</th>
+          <td mat-cell *matCellDef="let element">
+            <span class="badge" [ngClass]="getStatusClass(element.status)">
+              {{element.status}}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Request Type Column -->
+        <ng-container matColumnDef="requestType">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Type de Demande</th>
+          <td mat-cell *matCellDef="let element"> {{element.requestType}} </td>
+        </ng-container>
+
+        <!-- Description Column -->
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef>Description</th>
+          <td mat-cell *matCellDef="let element">{{ element.description }}</td>
+        </ng-container>
+
+        <!-- File Attachment Column -->
+        <ng-container matColumnDef="fileAttachment">
+          <th mat-header-cell *matHeaderCellDef>Fichier</th>
+          <td mat-cell *matCellDef="let element">
+            <a *ngIf="element.fileUrl" [href]="element.fileUrl" target="_blank" download>
+              <mat-icon>attach_file</mat-icon>
+            </a>
+            <span *ngIf="!element.fileUrl">N/A</span>
+          </td>
+        </ng-container>
+
+        <!-- Assigned To Column -->
+        <ng-container matColumnDef="assignedTo">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Assigné à</th>
+          <td mat-cell *matCellDef="let element"> {{element.assignedTo}} </td>
+        </ng-container>
+
+        <!-- Action Column -->
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef>Action</th>
+          <td mat-cell *matCellDef="let element">
+            <a mat-icon-button [routerLink]="['/apps/editRequest', element.id]">
+              <mat-icon>edit</mat-icon>
+            </a>
+          <a [routerLink]="['/viewInvoice', element.idR]" mat-icon-button>
+            <mat-icon>visibility</mat-icon>
+          </a>
+          <a mat-icon-button (click)="deleteRequest(element.idR)">
+            <mat-icon>delete</mat-icon>
+          </a>
+          
+          </td>
+        </ng-container>
+
+        <!-- Table Headers and Rows -->
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+      <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+    </div>
+  </mat-card-content>
+</mat-card>

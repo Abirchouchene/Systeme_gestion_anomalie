@@ -1,0 +1,36 @@
+.card {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  }
+}
+
+.card-header {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  border: none;
+  padding: 1rem 1.5rem;
+}
+
+.btn-group {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  .btn {
+    font-weight: 500;
+  }
+}
+
+.badge {
+  font-weight: 600;
+  padding: 0.5em 1em;
+  font-size: 0.875rem;
+}
+
+.border-start {
+  border-width: 4px !important;
+}
+
+.fa-exclamation-triangle {
+  opacity: 0.8;
+}

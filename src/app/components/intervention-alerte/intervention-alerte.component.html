@@ -1,0 +1,68 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-gradient-dark text-white">
+          <h4 class="mb-0">
+            <i class="fas fa-link me-2"></i>
+            Alertes depuis Surveillance (Communication Synchrone)
+          </h4>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Communication Feign Client:</strong> Les alertes ci-dessous sont récupérées en temps réel depuis le microservice Surveillance.
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12" *ngFor="let alerte of alertes">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                      <div class="d-flex align-items-center mb-2">
+                        <span class="badge me-2"
+                              [ngClass]="{
+                                'bg-danger': alerte.niveauGravite === 'CRITIQUE',
+                                'bg-warning': alerte.niveauGravite === 'ELEVE',
+                                'bg-info': alerte.niveauGravite === 'MOYEN'
+                              }">
+                          {{ alerte.niveauGravite }}
+                        </span>
+                        <span class="badge bg-secondary">{{ alerte.type }}</span>
+                      </div>
+                      <p class="mb-2">{{ alerte.message }}</p>
+                      <small class="text-muted">
+                        Détectée le {{ alerte.dateDetection | date:'dd/MM/yyyy à HH:mm' }}
+                      </small>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm" (click)="voirDetails(alerte.id!)">
+                      <i class="fas fa-eye me-1"></i>
+                      Détails
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Détails de l'alerte sélectionnée -->
+          <div class="modal-overlay" *ngIf="selectedAlerte" (click)="selectedAlerte = undefined">
+            <div class="modal-content" (click)="$event.stopPropagation()">
+              <div class="modal-header">
+                <h5>Détails de l'alerte #{{ selectedAlerte.id }}</h5>
+                <button class="btn-close" (click)="selectedAlerte = undefined"></button>
+              </div>
+              <div class="modal-body">
+                <p><strong>Type:</strong> {{ selectedAlerte.type }}</p>
+                <p><strong>Gravité:</strong> {{ selectedAlerte.niveauGravite }}</p>
+                <p><strong>Message:</strong> {{ selectedAlerte.message }}</p>
+                <p><strong>Date:</strong> {{ selectedAlerte.dateDetection | date:'dd/MM/yyyy à HH:mm:ss' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

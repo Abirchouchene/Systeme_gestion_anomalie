@@ -1,0 +1,11 @@
+<div class="page">
+  <h2>Mesures par source</h2>
+
+  <input [(ngModel)]="sourceId" placeholder="Source ID">
+  <button (click)="charger()">Rechercher</button>
+
+  <div *ngFor="let m of mesures" class="card">
+    {{ m.indicateur }} : {{ m.valeur }}
+  </div>
+</div>
+

@@ -1,0 +1,38 @@
+.card-header {
+  background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+  border: none;
+  padding: 1rem 1.5rem;
+}
+
+.tech-card {
+  transition: all 0.3s ease;
+  border: 2px solid #f8f9fa;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+    border-color: #17a2b8;
+  }
+}
+
+.tech-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.badge {
+  font-weight: 600;
+  padding: 0.5em 1em;
+  font-size: 0.875rem;
+}
+
+.border-top {
+  border-color: #e9ecef !important;
+}

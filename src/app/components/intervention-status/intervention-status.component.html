@@ -1,0 +1,80 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-gradient-success text-white">
+          <h4 class="mb-0">
+            <i class="fas fa-filter me-2"></i>
+            Recherche par Statut
+          </h4>
+        </div>
+        <div class="card-body">
+          <!-- Formulaire de recherche -->
+          <div class="row mb-4">
+            <div class="col-md-8">
+              <select class="form-select form-select-lg" [(ngModel)]="statut">
+                <option value="">-- Sélectionnez un statut --</option>
+                <option value="EN_ATTENTE">En attente</option>
+                <option value="EN_COURS">En cours</option>
+                <option value="TERMINEE">Terminée</option>
+                <option value="ANNULEE">Annulée</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <button class="btn btn-success btn-lg w-100" (click)="rechercher()" [disabled]="!statut">
+                <i class="fas fa-search me-2"></i>
+                Rechercher
+              </button>
+            </div>
+          </div>
+
+          <!-- Résultats -->
+          <div *ngIf="interventions.length > 0">
+            <h5 class="mb-3">
+              <i class="fas fa-list-ul me-2"></i>
+              {{ interventions.length }} résultat(s) trouvé(s)
+            </h5>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                <tr>
+                  <th>#ID</th>
+                  <th>Alerte</th>
+                  <th>Technicien</th>
+                  <th>Date</th>
+                  <th>Statut</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr *ngFor="let intervention of interventions">
+                  <td class="fw-bold">#{{ intervention.id }}</td>
+                  <td>Alerte #{{ intervention.alerteId }}</td>
+                  <td>Technicien #{{ intervention.technicienId }}</td>
+                  <td>{{ intervention.datePlanifiee | date:'dd/MM/yyyy' }}</td>
+                  <td>
+                      <span class="badge"
+                            [ngClass]="{
+                              'bg-success': intervention.statut === 'TERMINEE',
+                              'bg-primary': intervention.statut === 'EN_COURS',
+                              'bg-warning': intervention.statut === 'EN_ATTENTE',
+                              'bg-danger': intervention.statut === 'ANNULEE'
+                            }">
+                        {{ intervention.statut.replace('_', ' ') }}
+                      </span>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Message aucun résultat -->
+          <div class="alert alert-info" *ngIf="interventions.length === 0 && statut">
+            <i class="fas fa-info-circle me-2"></i>
+            Aucune intervention trouvée avec le statut "{{ statut.replace('_', ' ') }}"
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

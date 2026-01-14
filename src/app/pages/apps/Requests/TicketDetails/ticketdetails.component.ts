@@ -1,0 +1,762 @@
+import { CommonModule } from '@angular/common';
+import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA, ViewChild, TemplateRef } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TablerIconsModule } from 'angular-tabler-icons';
+import { MaterialModule } from 'src/app/material.module';
+import { MatChipsModule } from '@angular/material/chips';
+import { Request } from '../../../../models/Request';
+import { RequestType } from '../../../../models/RequestType';
+import { QuestionType } from '../../../../models/QuestionType';
+import { Contact } from '../../../../models/Contact';
+import { ContactStatus, getContactStatusLabel } from '../../../../models/ContactStatus';
+import { Status, getStatusLabel } from '../../../../models/Status';
+import { RequestService } from 'src/app/services/apps/ticket/request.service';
+import { ResponseService } from 'src/app/services/apps/response.service';
+import { ContactService } from 'src/app/services/apps/contact/contact.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { HttpErrorResponse } from '@angular/common/http';
+import { MatDialog } from '@angular/material/dialog';
+import { CallbackService } from 'src/app/services/apps/callback.service';
+import { Callback, CallbackStatus } from 'src/app/models/Callback';
+import { FormControl, Validators, FormGroup, FormBuilder } from '@angular/forms';
+import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
+import { MomentDateAdapter } from '@angular/material-moment-adapter';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { ActivityType } from '../../../../models/ActivityType';
+import { NotificationService } from 'src/app/services/apps/notification.service';
+import { NotificationType } from 'src/app/models/Notification';
+
+export const MY_FORMATS = {
+  parse: {
+    dateInput: 'LL',
+  },
+  display: {
+    dateInput: 'YYYY-MM-DD HH:mm',
+    monthYearLabel: 'YYYY',
+    dateA11yLabel: 'LL',
+    monthYearA11yLabel: 'YYYY',
+  },
+};
+
+interface CallHistoryActivity {
+  id: number;
+  type: ActivityType;
+  title: string;
+  description: string;
+  timestamp: Date;
+  contact?: Contact;
+  notes?: string;
+}
+
+@Component({
+  selector: 'app-requestdetails',
+  templateUrl: './ticketdetails.component.html',
+  styleUrls: ['./ticketdetails.component.scss'],
+  imports: [
+    MaterialModule,
+    CommonModule,
+    RouterLink,
+    FormsModule,
+    ReactiveFormsModule,
+    TablerIconsModule,
+    MatChipsModule,
+    MatDatepickerModule,
+    MatNativeDateModule
+  ],
+  providers: [
+    {
+      provide: DateAdapter,
+      useClass: MomentDateAdapter,
+      deps: [MAT_DATE_LOCALE]
+    },
+    { provide: MAT_DATE_FORMATS, useValue: MY_FORMATS }
+  ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  standalone: true
+})
+export class TicketdetailsComponent implements OnInit {
+  @ViewChild('callbackDialog') callbackDialog!: TemplateRef<any>;
+  
+  requestId: number = 0;
+  requestData: Request = {} as Request;
+  status: Status = Status.PENDING;
+  note: string = '';
+  isLoading: boolean = false;
+  isSavingResponses: boolean = false;
+  requestTypeEnum = RequestType;
+  QuestionType = QuestionType;
+  contactStatuses = ContactStatus;
+  contactStatusValues = Object.values(ContactStatus);
+  
+  // Contact swipe variables
+  currentContactIndex: number = 0;
+  currentContact: Contact | null = null;
+  
+  // Available statuses for agents (excluding PENDING, ASSIGNED, and AUTO_GENERATED)
+  availableStatuses: Status[] = [
+    Status.IN_PROGRESS,
+    Status.RESOLVED,
+    Status.APPROVED,
+    Status.REJECTED
+  ];
+  
+  // Section expansion controls
+  isContactsExpanded: boolean = true;
+  isQuestionsExpanded: boolean = true;
+  isDescriptionExpanded: boolean = true;
+  isClientResponseExpanded: boolean = true;
+  isStatusExpanded: boolean = true;
+  isReportExpanded: boolean = true;
+  isHistoryExpanded: boolean = true;
+  
+  isGeneratingReport: boolean = false;
+  canGenerateReport: boolean = false;
+  isManager: boolean = false; // This should be set based on user role
+  reportStatus: 'NOT_GENERATED' | 'PENDING_APPROVAL' | 'APPROVED' | 'SENT' = 'NOT_GENERATED';
+  
+  // Form controls
+  callbackForm = new FormGroup({
+    date: new FormControl<Date | null>(null, [Validators.required]),
+    time: new FormControl('', [Validators.required]),
+    notes: new FormControl<string>('')
+  });
+  selectedContact: Contact | null = null;
+  
+  callHistory: CallHistoryActivity[] = [];
+  upcomingCallbacks: Callback[] = [];
+  
+  constructor(
+    private route: ActivatedRoute,
+    private requestService: RequestService,
+    private responseService: ResponseService,
+    private contactService: ContactService,
+    private callbackService: CallbackService,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar,
+    private fb: FormBuilder,
+    private notificationService: NotificationService
+  ) {
+    this.initCallbackForm();
+  }
+
+  private initCallbackForm(): void {
+    this.callbackForm = this.fb.group({
+      date: [null as Date | null, [Validators.required]],
+      time: ['' as string, [Validators.required]],
+      notes: ['' as string]
+    });
+  }
+
+  ngOnInit(): void {
+    this.route.params.subscribe(params => {
+      this.requestId = +params['id'];
+      this.getRequestDetails();
+      this.loadCallHistory();
+    });
+    
+    // Set default values
+    this.checkIfUserIsManager();
+  }
+
+  getRequestDetails(): void {
+    this.requestService.getRequestById(this.requestId).subscribe({
+      next: (data: Request) => {
+        console.log('Request data loaded:', data);
+        this.requestData = data;
+        this.status = data.status;
+        this.note = data.note || '';
+        
+        // Initialize the current contact if contacts exist
+        if (this.requestData.contacts && this.requestData.contacts.length > 0) {
+          this.currentContactIndex = 0;
+          this.currentContact = this.requestData.contacts[0];
+        }
+        
+        // Load upcoming callbacks after getting request details
+        this.loadUpcomingCallbacks();
+        
+        // Check if agent information is available
+        if (!this.requestData.agent?.id) {
+          console.warn('No agent information available for this request');
+          this.showMessage('Warning: No agent information available. Please contact support.');
+        }
+        
+        // Check report status
+        this.checkReportStatus();
+      },
+      error: (error: HttpErrorResponse) => {
+        console.error('Failed to fetch request:', error);
+        this.showMessage('Failed to load request details');
+      }
+    });
+  }
+  
+  // Navigation methods for contact swipe
+  prevContact(): void {
+    if (this.currentContactIndex > 0 && this.requestData.contacts) {
+      this.currentContactIndex--;
+      this.currentContact = this.requestData.contacts[this.currentContactIndex];
+    }
+  }
+  
+  nextContact(): void {
+    if (this.requestData.contacts && this.currentContactIndex < this.requestData.contacts.length - 1) {
+      this.currentContactIndex++;
+      this.currentContact = this.requestData.contacts[this.currentContactIndex];
+    }
+  }
+  
+  // Complete current contact and move to next
+  completeAndNextContact(contact: Contact, status: ContactStatus, note: string): void {
+    // First update the status of the current contact
+    this.updateContactStatus(contact, status, note, () => {
+      // After successfully updating the contact, move to the next one
+      this.nextContact();
+    });
+  }
+  
+  // Updated method to accept a callback function for chaining
+  updateContactStatus(contact: Contact, status: ContactStatus, note: string, callback?: () => void): void {
+    this.isLoading = true;
+    this.contactService.updateContactStatus(contact.idC, status, note).subscribe({
+      next: (updatedContact: Contact) => {
+        this.isLoading = false;
+        
+        // Update the contact in the contacts array
+        if (this.requestData.contacts) {
+          const index = this.requestData.contacts.findIndex(c => c.idC === updatedContact.idC);
+          if (index !== -1) {
+            this.requestData.contacts[index] = updatedContact;
+            
+            // If this is the current contact, update it
+            if (this.currentContact && this.currentContact.idC === updatedContact.idC) {
+              this.currentContact = updatedContact;
+            }
+          }
+        }
+        
+        this.showMessage(`Statut du contact ${contact.name} mis à jour`);
+        
+        // Add activity to call history
+        this.addToCallHistory({
+          id: Math.floor(Math.random() * 1000),
+          type: ActivityType.STATUS_CHANGE,
+          title: `Statut du Contact Mis à Jour`,
+          description: `Le statut du contact a été mis à jour à ${this.getContactStatusLabel(status)}`,
+          timestamp: new Date(),
+          contact: contact,
+          notes: note
+        });
+        
+        // Execute callback if provided
+        if (callback) {
+          callback();
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isLoading = false;
+        console.error('Error updating contact status:', error);
+        this.showMessage('Erreur lors de la mise à jour du statut');
+      }
+    });
+  }
+  
+  private addToCallHistory(activity: CallHistoryActivity): void {
+    // Add to the beginning of the array to show most recent first
+    this.callHistory.unshift(activity);
+  }
+  
+  // Check if the current user is a manager
+  checkIfUserIsManager(): void {
+    // This should come from your auth service
+    // Temporarily using a mock implementation
+    this.isManager = localStorage.getItem('userRole') === 'MANAGER';
+  }
+  
+  // Check the status of report for this request
+  checkReportStatus(): void {
+    this.requestService.getReportStatus(this.requestId).subscribe({
+      next: (status) => {
+        this.reportStatus = status;
+      },
+      error: (error) => {
+        console.error('Error fetching report status:', error);
+        // Default to NOT_GENERATED in case of error
+        this.reportStatus = 'NOT_GENERATED';
+      }
+    });
+  }
+
+  toggleSection(section: 'contacts' | 'questions' | 'description' | 'clientResponse' | 'status' | 'report' | 'history'): void {
+    switch (section) {
+      case 'contacts':
+        this.isContactsExpanded = !this.isContactsExpanded;
+        break;
+      case 'questions':
+        this.isQuestionsExpanded = !this.isQuestionsExpanded;
+        break;
+      case 'description':
+        this.isDescriptionExpanded = !this.isDescriptionExpanded;
+        break;
+      case 'clientResponse':
+        this.isClientResponseExpanded = !this.isClientResponseExpanded;
+        break;
+      case 'status':
+        this.isStatusExpanded = !this.isStatusExpanded;
+        break;
+      case 'report':
+        this.isReportExpanded = !this.isReportExpanded;
+        break;
+      case 'history':
+        this.isHistoryExpanded = !this.isHistoryExpanded;
+        break;
+    }
+  }
+
+  updateClientResponse(): void {
+    if (!this.requestData || !this.note.trim()) {
+      this.showMessage('Please enter a client response');
+      return;
+    }
+
+    this.isLoading = true;
+    this.requestService.updateNote(this.requestData.idR, this.note).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.showMessage('Client response updated successfully');
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isLoading = false;
+        console.error('Error updating client response:', error);
+        this.showMessage('Failed to update client response');
+      }
+    });
+  }
+
+  getStatusLabel(status: Status): string {
+    return getStatusLabel(status);
+  }
+
+  getContactStatusLabel(status: ContactStatus | undefined): string {
+    return status ? getContactStatusLabel(status) : 'Not Set';
+  }
+
+  getStatusColor(status: ContactStatus | undefined): string {
+    if (!status) return 'primary';
+    
+    switch (status) {
+      case ContactStatus.CONTACTED_AVAILABLE:
+        return 'success';
+      case ContactStatus.CONTACTED_UNAVAILABLE:
+      case ContactStatus.CALL_BACK_LATER:
+        return 'warning';
+      case ContactStatus.NO_ANSWER:
+      case ContactStatus.WRONG_NUMBER:
+        return 'error';
+      default:
+        return 'primary';
+    }
+  }
+
+  updateLastCallAttempt(contactId: number): void {
+    this.isLoading = true;
+    
+    this.contactService.updateLastCallAttempt(contactId).subscribe({
+      next: () => {
+        this.isLoading = false;
+        
+        // Fetch the contact from current contacts array
+        if (this.requestData.contacts) {
+          const updatedContact = this.requestData.contacts.find(c => c.idC === contactId);
+          
+          if (updatedContact) {
+            // Set the last call attempt to now since the service doesn't return it
+            updatedContact.lastCallAttempt = new Date();
+            
+            // If this is the current contact, update it
+            if (this.currentContact && this.currentContact.idC === contactId) {
+              this.currentContact = {...updatedContact};
+            }
+            
+            // Add to call history
+            this.addToCallHistory({
+              id: Math.floor(Math.random() * 1000),
+              type: ActivityType.CALL,
+              title: 'Appel Effectué',
+              description: 'Un appel a été effectué à ce contact',
+              timestamp: new Date(),
+              contact: updatedContact
+            });
+          }
+        }
+        
+        this.showMessage('Tentative d\'appel enregistrée');
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isLoading = false;
+        console.error('Error updating last call attempt:', error);
+        this.showMessage('Erreur lors de l\'enregistrement de l\'appel');
+      }
+    });
+  }
+
+  formatLastCallAttempt(timestamp: string | Date | undefined): string {
+    if (!timestamp) return '';
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+    return date.toLocaleString(); // Format: MM/DD/YYYY, HH:MM:SS AM/PM
+  }
+
+  updateRequest(): void {
+    if (!this.requestData || !this.status.trim()) {
+      alert('Please select a valid status before updating!');
+      return;
+    }
+
+    this.isLoading = true;
+
+    this.requestService.updateRequestStatus(this.requestData.idR, this.status).subscribe({
+      next: () => {
+        this.isLoading = false;
+        alert('Request updated successfully!');
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error updating request:', error);
+        alert('Failed to update the request. Please try again.');
+      }
+    });
+  }
+
+  saveResponses(): void {
+    if (!this.requestData?.questions?.length) {
+      this.showMessage('No questions to save responses for');
+      return;
+    }
+
+    this.isSavingResponses = true;
+    let savedCount = 0;
+    const totalQuestions = this.requestData.questions.length;
+
+    this.requestData.questions.forEach(question => {
+      if (question.response) {
+        this.responseService.addResponsesToQuestion(question.id, [question.response]).subscribe({
+          next: () => {
+            savedCount++;
+            if (savedCount === totalQuestions) {
+              this.isSavingResponses = false;
+              this.showMessage('All responses saved successfully');
+            }
+          },
+          error: (error) => {
+            console.error('Error saving response:', error);
+            this.isSavingResponses = false;
+            this.showMessage('Error saving responses. Please try again.');
+          }
+        });
+      }
+    });
+  }
+
+  private showMessage(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 3000,
+      horizontalPosition: 'center',
+      verticalPosition: 'top',
+    });
+  }
+
+  canShowGenerateReport(): boolean {
+    // Check if request status allows report generation
+    const validStatus = this.requestData.status === Status.RESOLVED || 
+                        this.requestData.status === Status.APPROVED;
+    
+    // Only show generate button when report is not yet generated
+    // and the request has a valid status
+    return validStatus;
+  }
+
+  generateReport(): void {
+    if (!this.canShowGenerateReport()) {
+      this.showMessage('Cannot generate report. Ticket must be resolved or approved.');
+      return;
+    }
+
+    this.isGeneratingReport = true;
+    // Call your report service here
+    this.requestService.generateReport(this.requestData.idR).subscribe({
+      next: (response) => {
+        this.isGeneratingReport = false;
+        this.reportStatus = 'PENDING_APPROVAL';
+        this.showMessage('Report generated successfully and sent for manager approval');
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isGeneratingReport = false;
+        console.error('Error generating report:', error);
+        this.showMessage('Failed to generate report');
+      }
+    });
+  }
+
+  approveReport(): void {
+    if (!this.isManager) {
+      this.showMessage('Only managers can approve reports');
+      return;
+    }
+
+    this.requestService.approveReport(this.requestData.idR).subscribe({
+      next: () => {
+        this.reportStatus = 'APPROVED';
+        this.showMessage('Report approved and sent to requester');
+      },
+      error: (error: HttpErrorResponse) => {
+        console.error('Error approving report:', error);
+        this.showMessage('Failed to approve report');
+      }
+    });
+  }
+
+  rejectReport(): void {
+    if (!this.isManager) {
+      this.showMessage('Only managers can reject reports');
+      return;
+    }
+
+    this.requestService.rejectReport(this.requestData.idR).subscribe({
+      next: () => {
+        this.reportStatus = 'NOT_GENERATED';
+        this.showMessage('Report rejected');
+      },
+      error: (error: HttpErrorResponse) => {
+        console.error('Error rejecting report:', error);
+        this.showMessage('Failed to reject report');
+      }
+    });
+  }
+
+  getReportStatusLabel(): string {
+    switch (this.reportStatus) {
+      case 'NOT_GENERATED':
+        return 'Not Generated';
+      case 'PENDING_APPROVAL':
+        return 'Pending Manager Approval';
+      case 'APPROVED':
+        return 'Approved & Sent';
+      case 'SENT':
+        return 'Sent to Requester';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  getReportStatusColor(): string {
+    switch (this.reportStatus) {
+      case 'NOT_GENERATED':
+        return 'primary';
+      case 'PENDING_APPROVAL':
+        return 'warn';
+      case 'APPROVED':
+      case 'SENT':
+        return 'accent';
+      default:
+        return 'primary';
+    }
+  }
+
+  openScheduleCallback(contact: Contact): void {
+    this.selectedContact = contact;
+    
+    // Reset the form
+    this.callbackForm.reset({
+      date: null,
+      time: '',
+      notes: ''
+    });
+    
+    // Open the dialog
+    const dialogRef = this.dialog.open(this.callbackDialog, {
+      width: '500px'
+    });
+    
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === true) {
+        // Dialog confirmed but handled in scheduleCallback()
+      } else {
+        // Dialog cancelled
+        this.selectedContact = null;
+      }
+    });
+  }
+
+  private createDateFromControls(): Date | null {
+    const selectedDate = this.callbackForm.get('date')?.value;
+    const timeString = this.callbackForm.get('time')?.value;
+    
+    console.log('Creating date from controls:', { selectedDate, timeString });
+    
+    if (!selectedDate || !timeString) {
+      return null;
+    }
+
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const date = new Date(selectedDate);
+    date.setHours(hours, minutes);
+    console.log('Created date:', date);
+    return date;
+  }
+
+  scheduleCallback(): void {
+    console.log('Schedule button clicked');
+    console.log('Form valid:', this.callbackForm.valid);
+    console.log('Form values:', this.callbackForm.value);
+    console.log('Selected contact:', this.selectedContact);
+    console.log('Agent ID:', this.requestData.agent?.id);
+
+    if (!this.selectedContact) {
+      this.showMessage('No contact selected');
+      return;
+    }
+
+    if (!this.callbackForm.valid) {
+      this.showMessage('Please fill in all required fields');
+      return;
+    }
+
+   // if (!this.requestData.agent?.id) {
+     // this.showMessage('Cannot schedule callback: No agent information available');
+      //return;
+    //}
+
+    const scheduledDate = this.createDateFromControls();
+    if (!scheduledDate) {
+      console.log('Invalid date/time');
+      this.showMessage('Invalid date or time selected');
+      return;
+    }
+
+    const callback: Callback = {
+      contactId: this.selectedContact.idC,
+      requestId: this.requestId,
+      scheduledDate,
+      notes: this.callbackForm.get('notes')?.value || undefined,
+      status: CallbackStatus.SCHEDULED,
+      agentId: this.requestData.agent?.id || 1
+    };
+
+    console.log('Sending callback data:', callback);
+
+    this.callbackService.scheduleCallback(callback).subscribe({
+      next: (response) => {
+        // Add to call history
+        this.callHistory.unshift({
+          id: Date.now(),
+          type: ActivityType.CALLBACK,
+          title: 'Callback Scheduled',
+          description: `Callback scheduled for ${scheduledDate.toLocaleString()}`,
+          timestamp: new Date(),
+          contact: this.selectedContact!,
+          notes: this.callbackForm.get('notes')?.value || undefined
+        });
+
+        // Notify the agent
+        if (this.requestData.agent?.id) {
+          this.notificationService.notifyAgent(
+            this.requestData.agent.id,
+            `New callback scheduled for ${scheduledDate.toLocaleString()} with ${this.selectedContact?.name}`,
+            NotificationType.CALLBACK
+          ).subscribe();
+        }
+
+        this.showMessage('Callback scheduled successfully');
+        this.dialog.closeAll();
+        
+        // Update contact status
+        this.updateContactStatus(
+          this.selectedContact!, 
+          ContactStatus.CALL_BACK_LATER, 
+          `Callback scheduled for ${scheduledDate.toLocaleString()}`
+        );
+
+        // Refresh upcoming callbacks
+        this.loadUpcomingCallbacks();
+      },
+      error: (error) => {
+        console.error('Error scheduling callback:', error);
+        
+        // Handle different error scenarios
+        let errorMessage = 'Failed to schedule callback';
+        if (error.status === 0) {
+          errorMessage += ': Server not reachable';
+        } else if (error.status === 400) {
+          errorMessage += ': Invalid data provided';
+          if (error.error && error.error.message) {
+            errorMessage += ` - ${error.error.message}`;
+          }
+        } else if (error.status === 401) {
+          errorMessage += ': Authentication required';
+        } else if (error.status === 403) {
+          errorMessage += ': Access denied';
+        } else if (error.error && error.error.message) {
+          errorMessage += `: ${error.error.message}`;
+        }
+        
+        this.showMessage(errorMessage);
+        // Close dialog only if it's a server error but not a validation error
+        if (error.status !== 400) {
+          this.dialog.closeAll();
+        }
+      }
+    });
+  }
+
+  getActivityIcon(type: ActivityType): string {
+    switch (type) {
+      case ActivityType.CALL:
+        return 'phone';
+      case ActivityType.CALLBACK:
+        return 'schedule';
+      case ActivityType.STATUS_CHANGE:
+        return 'update';
+      case ActivityType.NOTE:
+        return 'note';
+      default:
+        return 'info';
+    }
+  }
+
+  getActivityBadgeClass(type: ActivityType): string {
+    switch (type) {
+      case ActivityType.CALL:
+        return 'call';
+      case ActivityType.CALLBACK:
+        return 'callback';
+      case ActivityType.STATUS_CHANGE:
+        return 'status';
+      case ActivityType.NOTE:
+        return 'note';
+      default:
+        return '';
+    }
+  }
+
+  // Add method to load call history
+  loadCallHistory(): void {
+    // This would typically come from your backend service
+    // For now, we'll just use the activities we've collected
+    this.callHistory.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }
+
+  loadUpcomingCallbacks(): void {
+    if (this.requestData.agent?.id) {
+      this.callbackService.getUpcomingCallbacks(this.requestData.agent.id).subscribe({
+        next: (callbacks) => {
+          this.upcomingCallbacks = callbacks;
+        },
+        error: (error) => {
+          console.error('Error loading upcoming callbacks:', error);
+        }
+      });
+    }
+  }
+}
