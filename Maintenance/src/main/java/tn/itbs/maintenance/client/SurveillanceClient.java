@@ -8,7 +8,7 @@ import tn.itbs.maintenance.dto.AlerteEvent;
 import tn.itbs.maintenance.dto.*;
 import java.util.List;
 
-@FeignClient(name = "surveillance", path = "/api/v1/alertes")
+@FeignClient(name = "surveillance", path = "/api/v1/surveillance/alertes")
 public interface SurveillanceClient {
 
     @GetMapping("/{id}")

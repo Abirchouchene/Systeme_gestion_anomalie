@@ -1,9 +1,9 @@
 eureka:
   instance:
-    hostname: localhost
+    hostname: eureka-serve
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://eureka-server:8761/eureka
 
 
 server:
@@ -14,7 +14,9 @@ spring:
     port: 5672
     username: uptech
     password: uptech
-
+rabbitmq:
+  queue:
+    alertes: "anomalie.queue"
   security:
     oauth2:
       resourceserver:
@@ -57,11 +59,5 @@ spring:
   jackson:
     time-zone: UTC
 
-application:
-  config:
-    students-url: http://localhost:8222/api/v1/students
 
-management:
-  zipkin:
-    tracing:
-      enabled: false
+

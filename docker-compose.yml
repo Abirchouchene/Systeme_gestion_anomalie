@@ -1,46 +1,48 @@
+version: '3.8'
+
 services:
-  postgresql:
-    container_name: mysql
-    image: mysql
+
+  # Eureka Server
+  eureka-server:
+    build: ./discovery
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices-net
+
+  # Maintenance Service
+  maintenance-service:
+    build: ./maintenance
+    container_name: maintenance-service
+    ports:
+      - "8070:8070"
+    depends_on:
+      - eureka-server
+    networks:
+      - microservices-net
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-      PGDATA: /data/postgres
-    volumes:
-      - postgres:/data/postgres
+      SPRING_DATASOURCE_URL: jdbc:mysql://192.168.10.161:3306/maintenance
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_RABBITMQ_HOST: 192.168.10.161
+
+  # Surveillance Service
+  surveillance-service:
+    build: ./surveillance
+    container_name: surveillance-service
     ports:
-      - "5432:5432"
+      - "8090:8090"
+    depends_on:
+      - eureka-server
     networks:
-      - postgres
-    restart: unless-stopped
-  pgadmin:
-    container_name: pgadmin
-    image: dpage/pgadmin4
+      - microservices-net
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    volumes:
-      - pgadmin:/var/lib/pgadmin
-    ports:
-      - "5050:80"
-    networks:
-      - postgres
-    restart: unless-stopped
-  zipkin:
-    container_name: zipkin
-    image: openzipkin/zipkin
-    ports:
-      - "9411:9411"
-    networks:
-      - zipkin
+      SPRING_DATASOURCE_URL: jdbc:mysql://192.168.10.161:3306/surveillance
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_RABBITMQ_HOST: 192.168.10.161
 
 networks:
-  postgres:
+  microservices-net:
     driver: bridge
-  zipkin:
-    driver: bridge
-
-volumes:
-  postgres:
-  pgadmin:
