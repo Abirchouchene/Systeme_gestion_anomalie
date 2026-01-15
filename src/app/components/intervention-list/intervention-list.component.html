@@ -1,120 +1,136 @@
 <div class="container-fluid py-4">
-  <div class="row">
-    <div class="col-12">
+
+  <!-- En-tête -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">
+        <i class="bi bi-tools me-2"></i>Liste des interventions
+      </h3>
+      <p class="text-muted mb-0">
+        Gestion et suivi des interventions techniques
+      </p>
+    </div>
+
+    <button class="btn btn-outline-primary" (click)="rafraichir()">
+      <i class="bi bi-arrow-clockwise me-1"></i> Rafraîchir
+    </button>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
       <div class="card shadow-sm border-0">
-        <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
-          <h4 class="mb-0">
-            <i class="fas fa-wrench me-2"></i>
-            Suivi des Interventions
-          </h4>
-          <button class="btn btn-light btn-sm" (click)="chargerDonnees()">
-            <i class="fas fa-sync me-1"></i>
-            Actualiser
-          </button>
+        <div class="card-body text-center">
+          <span class="badge bg-warning text-dark mb-2">En attente</span>
+          <h4 class="fw-bold">{{ getInterventionsByStatut('EN_ATTENTE') }}</h4>
         </div>
-        <div class="card-body p-0">
-          <!-- Loading -->
-          <div *ngIf="loading" class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Chargement...</span>
-            </div>
-            <p class="mt-2 text-muted">Chargement des interventions...</p>
-          </div>
+      </div>
+    </div>
 
-          <!-- Error -->
-          <div *ngIf="error" class="alert alert-danger m-3">
-            <i class="fas fa-exclamation-circle me-2"></i>
-            {{ error }}
-            <button class="btn btn-sm btn-outline-danger ms-3" (click)="chargerDonnees()">
-              <i class="fas fa-redo me-1"></i> Réessayer
-            </button>
-          </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center">
+          <span class="badge bg-info mb-2">En cours</span>
+          <h4 class="fw-bold">{{ getInterventionsByStatut('EN_COURS') }}</h4>
+        </div>
+      </div>
+    </div>
 
-          <!-- Table -->
-          <div class="table-responsive" *ngIf="!loading && !error">
-            <table class="table table-hover mb-0">
-              <thead class="table-light">
-              <tr>
-                <th scope="col">#ID</th>
-                <th scope="col">Alerte</th>
-                <th scope="col">Technicien</th>
-                <th scope="col">Date planifiée</th>
-                <th scope="col">Statut</th>
-                <th scope="col">Actions</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr *ngFor="let intervention of interventions">
-                <td class="fw-bold">#{{ intervention.id }}</td>
-                <td>
-                    <span class="badge bg-secondary">
-                      Alerte #{{ intervention.alerteId }}
-                    </span>
-                </td>
-                <td>
-                  <div class="d-flex align-items-center">
-                    <div class="avatar-circle me-2">
-                      <i class="fas fa-user"></i>
-                    </div>
-                    {{ getNomTechnicien(intervention.technicienId) }}
-                  </div>
-                </td>
-                <td>
-                  <i class="fas fa-calendar-alt me-1 text-muted"></i>
-                  {{ intervention.datePlanifiee | date:'dd/MM/yyyy' }}
-                </td>
-                <td>
-                    <span class="badge status-badge"
-                          [ngClass]="{
-                            'bg-success': intervention.statut === 'TERMINEE',
-                            'bg-primary': intervention.statut === 'EN_COURS',
-                            'bg-warning text-dark': intervention.statut === 'EN_ATTENTE',
-                            'bg-danger': intervention.statut === 'ANNULEE'
-                          }">
-                      <i class="fas me-1"
-                         [ngClass]="{
-                           'fa-check-circle': intervention.statut === 'TERMINEE',
-                           'fa-clock': intervention.statut === 'EN_COURS',
-                           'fa-hourglass-half': intervention.statut === 'EN_ATTENTE',
-                           'fa-times-circle': intervention.statut === 'ANNULEE'
-                         }"></i>
-                      {{ intervention.statut.replace('_', ' ') }}
-                    </span>
-                </td>
-                <td>
-                  <div class="btn-group btn-group-sm" role="group">
-                    <button class="btn btn-outline-primary"
-                            *ngIf="intervention.statut === 'EN_ATTENTE'"
-                            (click)="changerStatut(intervention, 'EN_COURS')"
-                            title="Démarrer">
-                      <i class="fas fa-play"></i>
-                    </button>
-                    <button class="btn btn-outline-success"
-                            *ngIf="intervention.statut === 'EN_COURS'"
-                            (click)="changerStatut(intervention, 'TERMINEE')"
-                            title="Terminer">
-                      <i class="fas fa-check"></i>
-                    </button>
-                    <button class="btn btn-outline-danger"
-                            *ngIf="intervention.statut !== 'TERMINEE' && intervention.statut !== 'ANNULEE'"
-                            (click)="changerStatut(intervention, 'ANNULEE')"
-                            title="Annuler">
-                      <i class="fas fa-times"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center">
+          <span class="badge bg-success mb-2">Terminées</span>
+          <h4 class="fw-bold">{{ getInterventionsByStatut('TERMINEE') }}</h4>
+        </div>
+      </div>
+    </div>
 
-          <!-- Message si aucune intervention -->
-          <div class="text-center py-5" *ngIf="!loading && !error && interventions.length === 0">
-            <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
-            <h5 class="text-muted">Aucune intervention planifiée</h5>
-          </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center">
+          <span class="badge bg-secondary mb-2">Annulées</span>
+          <h4 class="fw-bold">{{ getInterventionsByStatut('ANNULEE') }}</h4>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Filtres -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+      <div class="row align-items-end">
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Filtrer par statut</label>
+          <select class="form-select" [(ngModel)]="filtreStatut">
+            <option value="">Tous les statuts</option>
+            <option value="EN_ATTENTE">En attente</option>
+            <option value="EN_COURS">En cours</option>
+            <option value="TERMINEE">Terminée</option>
+            <option value="ANNULEE">Annulée</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+    <p class="mt-3 text-muted">Chargement des interventions...</p>
+  </div>
+
+  <!-- Erreur -->
+  <div *ngIf="error" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+  </div>
+
+  <!-- Tableau -->
+  <div *ngIf="!loading && !error" class="card shadow-sm border-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Alerte</th>
+          <th>Technicien</th>
+          <th>Date planifiée</th>
+          <th>Statut</th>
+          <th class="text-end">Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let i of getInterventionsFiltrees()">
+          <td class="fw-semibold">{{ i.id }}</td>
+          <td>{{ i.alerteId }}</td>
+          <td>{{ getNomTechnicien(i.technicienId) }}</td>
+          <td>{{ i.datePlanifiee | date:'dd/MM/yyyy' }}</td>
+          <td>
+              <span class="badge" [ngClass]="getStatutBadgeClass(i.statut)">
+                <i class="bi me-1" [ngClass]="getStatutIcon(i.statut)"></i>
+                {{ i.statut }}
+              </span>
+          </td>
+          <td class="text-end">
+            <select class="form-select form-select-sm d-inline w-auto"
+                    (ngModelChange)="changerStatut(i, $event)"
+                    [ngModel]="i.statut">
+              <option value="EN_ATTENTE">En attente</option>
+              <option value="EN_COURS">En cours</option>
+              <option value="TERMINEE">Terminée</option>
+              <option value="ANNULEE">Annulée</option>
+            </select>
+
+          </td>
+        </tr>
+
+        <tr *ngIf="getInterventionsFiltrees().length === 0">
+          <td colspan="6" class="text-center text-muted py-4">
+            <i class="bi bi-info-circle me-2"></i>Aucune intervention trouvée
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>

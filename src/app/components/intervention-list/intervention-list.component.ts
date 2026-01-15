@@ -5,12 +5,14 @@ import {DatePipe} from "@angular/common";
 import { CommonModule } from '@angular/common';
 import { Technicien } from 'src/app/models/Technicien';
 import { TechnicienService } from 'src/app/services/technicien.service';
+import { FormsModule } from '@angular/forms';  // ✅ AJOUTER CECI
 
 @Component({
   selector: 'app-intervention-list',
   imports: [
     DatePipe,
-    CommonModule
+    CommonModule,FormsModule
+    
   ],
   templateUrl: './intervention-list.component.html',
   styleUrl: './intervention-list.component.scss'
@@ -20,6 +22,9 @@ export class InterventionListComponent implements OnInit {
   techniciens: Technicien[] = [];
   loading: boolean = false;
   error: string = '';
+
+  // Filtres et stats
+  filtreStatut: string = '';
 
   constructor(
     private interventionService: InterventionService,
@@ -58,7 +63,6 @@ export class InterventionListComponent implements OnInit {
     });
   }
 
-  // ✅ Signature corrigée - accepte 'number' seulement (pas undefined)
   getNomTechnicien(technicienId: number): string {
     const technicien = this.techniciens.find(t => t.id === technicienId);
     return technicien ? technicien.nom : `Technicien #${technicienId}`;
@@ -87,5 +91,43 @@ export class InterventionListComponent implements OnInit {
         }
       });
     }
+  }
+
+  // Méthodes pour les statistiques
+  getInterventionsByStatut(statut: string): number {
+    return this.interventions.filter(i => i.statut === statut).length;
+  }
+
+  getInterventionsFiltrees(): Intervention[] {
+    if (!this.filtreStatut) {
+      return this.interventions;
+    }
+    return this.interventions.filter(i => i.statut === this.filtreStatut);
+  }
+
+  // Méthodes pour les classes CSS
+  getStatutBadgeClass(statut: string): string {
+    switch(statut) {
+      case 'EN_ATTENTE': return 'bg-warning text-dark';
+      case 'EN_COURS': return 'bg-info';
+      case 'TERMINEE': return 'bg-success';
+      case 'ANNULEE': return 'bg-secondary';
+      default: return 'bg-secondary';
+    }
+  }
+
+  getStatutIcon(statut: string): string {
+    switch(statut) {
+      case 'EN_ATTENTE': return 'bi-clock';
+      case 'EN_COURS': return 'bi-gear-fill';
+      case 'TERMINEE': return 'bi-check-circle';
+      case 'ANNULEE': return 'bi-x-circle';
+      default: return 'bi-question-circle';
+    }
+  }
+
+  // Méthode pour rafraîchir les données
+  rafraichir(): void {
+    this.chargerDonnees();
   }
 }

@@ -1,142 +1,104 @@
 <div class="container-fluid py-4">
   <div class="row mb-4">
     <div class="col-12">
-      <div class="card shadow-sm border-0">
-        <div class="card-header bg-gradient-info text-white d-flex justify-content-between align-items-center">
-          <h4 class="mb-0">
-            <i class="fas fa-users me-2"></i>
-            Équipe Technique
-          </h4>
-          <button class="btn btn-light btn-sm" (click)="toggleForm()">
-            <i class="fas me-1" [ngClass]="showAddForm ? 'fa-times' : 'fa-plus'"></i>
-            {{ showAddForm ? 'Annuler' : 'Ajouter un technicien' }}
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center py-3">
+          <h4 class="mb-0"><i class="fas fa-users me-2"></i>Équipe Technique</h4>
+          <button class="btn-fancy" (click)="openModal()">
+            <div class="btn-content">
+              <i class="fas fa-plus-circle"></i>
+              <span>Nouveau Technicien</span>
+            </div>
+            <div class="btn-flare"></div>
           </button>
         </div>
-        <div class="card-body">
-          <!-- Formulaire d'ajout -->
-          <div class="card mb-4 border-primary" *ngIf="showAddForm">
+      </div>
+
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Chargement de l'équipe...</p>
+      </div>
+
+      <div *ngIf="error" class="alert alert-danger shadow-sm">
+        <i class="fas fa-exclamation-circle me-2"></i> {{ error }}
+        <button class="btn btn-sm btn-outline-danger ms-3" (click)="chargerTechniciens()">Réessayer</button>
+      </div>
+
+      <div class="row g-4" *ngIf="!loading && !error">
+        <div class="col-md-6 col-lg-4" *ngFor="let technicien of techniciens">
+          <div class="card tech-card h-100 border-0 shadow-sm animate-fade-in">
             <div class="card-body">
-              <h5 class="card-title mb-3">
-                <i class="fas fa-user-plus me-2"></i>
-                Nouveau Technicien
-              </h5>
-              <form (ngSubmit)="ajouterTechnicien()">
-                <div class="row g-3">
-                  <div class="col-md-4">
-                    <label class="form-label">Nom complet</label>
-                    <input type="text"
-                           class="form-control"
-                           [(ngModel)]="nouveauTechnicien.nom"
-                           name="nom"
-                           placeholder="Ex: Jean Dupont"
-                           required>
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Spécialité</label>
-                    <select class="form-select"
-                            [(ngModel)]="nouveauTechnicien.specialite"
-                            name="specialite"
-                            required>
-                      <option value="">-- Sélectionner --</option>
-                      <option value="TEMPERATURE">Température</option>
-                      <option value="PRESSION">Pression</option>
-                      <option value="VIBRATION">Vibration</option>
-                      <option value="ELECTRICITE">Électricité</option>
-                      <option value="MECANIQUE">Mécanique</option>
-                    </select>
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Disponibilité</label>
-                    <select class="form-select"
-                            [(ngModel)]="nouveauTechnicien.disponibilite"
-                            name="disponibilite"
-                            (change)="onDisponibiliteChange($event)">
-                      <option value="true">Disponible</option>
-                      <option value="false">Indisponible</option>
-                    </select>
-                  </div>
+              <div class="d-flex align-items-center mb-3">
+                <div class="tech-avatar me-3">
+                  {{ getInitiales(technicien.nom) }}
                 </div>
-                <div class="mt-3">
-                  <button type="submit"
-                          class="btn btn-primary"
-                          [disabled]="!nouveauTechnicien.nom || !nouveauTechnicien.specialite">
-                    <i class="fas fa-save me-1"></i>
-                    Enregistrer
-                  </button>
-                  <button type="button"
-                          class="btn btn-secondary ms-2"
-                          (click)="toggleForm()">
-                    <i class="fas fa-times me-1"></i>
-                    Annuler
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          <!-- Loading -->
-          <div *ngIf="loading" class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Chargement...</span>
-            </div>
-            <p class="mt-2 text-muted">Chargement des techniciens...</p>
-          </div>
-
-          <!-- Error -->
-          <div *ngIf="error" class="alert alert-danger">
-            <i class="fas fa-exclamation-circle me-2"></i>
-            {{ error }}
-            <button class="btn btn-sm btn-outline-danger ms-3" (click)="chargerTechniciens()">
-              <i class="fas fa-redo me-1"></i> Réessayer
-            </button>
-          </div>
-
-          <!-- Liste des techniciens -->
-          <div class="row g-4" *ngIf="!loading && !error">
-            <div class="col-md-6 col-lg-4" *ngFor="let technicien of techniciens">
-              <div class="card tech-card h-100 border-0 shadow-sm">
-                <div class="card-body">
-                  <div class="d-flex align-items-center mb-3">
-                    <div class="tech-avatar me-3">
-                      <div class="tech-avatar me-3">
-                        {{ getInitiales(technicien.nom) }}
-                      </div>                    </div>
-                    <div class="flex-grow-1">
-                      <h5 class="mb-1">{{ technicien.nom }}</h5>
-                      <p class="text-muted mb-0">
-                        <i class="fas fa-tools me-1"></i>
-                        {{ technicien.specialite }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                    <span class="text-muted fw-medium">Statut:</span>
-                    <span class="badge"
-                          [ngClass]="{
-                            'bg-success': technicien.disponibilite,
-                            'bg-danger': !technicien.disponibilite
-                          }">
-                      <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>
-                      {{ technicien.disponibilite ? 'Disponible' : 'En intervention' }}
-                    </span>
-                  </div>
+                <div class="flex-grow-1">
+                  <h5 class="mb-0 fw-bold">{{ technicien.nom }}</h5>
+                  <span class="badge bg-light text-primary border mt-1">
+                    <i class="fas fa-tools me-1"></i> {{ technicien.specialite }}
+                  </span>
                 </div>
               </div>
-            </div>
-
-            <!-- Message si aucun technicien -->
-            <div class="col-12 text-center py-5" *ngIf="techniciens.length === 0">
-              <i class="fas fa-user-slash fa-4x text-muted mb-3"></i>
-              <h5 class="text-muted">Aucun technicien enregistré</h5>
-              <button class="btn btn-primary mt-3" (click)="toggleForm()">
-                <i class="fas fa-plus me-1"></i>
-                Ajouter le premier technicien
-              </button>
+              <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                <small class="text-muted">Statut actuel</small>
+                <span [ngClass]="technicien.disponibilite ? 'status-online' : 'status-offline'">
+                  {{ technicien.disponibilite ? 'Disponible' : 'En intervention' }}
+                </span>
+              </div>
             </div>
           </div>
+        </div>
+
+        <div class="col-12 text-center py-5" *ngIf="techniciens.length === 0">
+          <i class="fas fa-user-slash fa-4x text-light mb-3"></i>
+          <h5 class="text-muted">Aucun technicien trouvé</h5>
         </div>
       </div>
     </div>
+  </div>
+
+  <div class="modal-overlay" [class.active]="showAddForm" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-decoration"></div>
+
+      <div class="modal-body">
+        <button class="btn-close-circle" (click)="closeModal()">&times;</button>
+
+        <div class="text-center mb-4">
+          <div class="icon-header">
+            <i class="fas fa-user-cog"></i>
+          </div>
+          <h2 class="fw-bold mt-2">Ajouter un expert</h2>
+          <p class="text-muted small">Remplissez les informations pour agrandir l'équipe</p>
+        </div>
+
+        <form (ngSubmit)="ajouterTechnicien()" #techForm="ngForm">
+          <div class="custom-input-group">
+            <label><i class="fas fa-signature"></i> Nom complet</label>
+            <input type="text" [(ngModel)]="nouveauTechnicien.nom" name="nom" required placeholder="Jean Dupont">
+          </div>
+
+          <div class="custom-input-group">
+            <label><i class="fas fa-star"></i> Spécialité</label>
+            <select [(ngModel)]="nouveauTechnicien.specialite" name="specialite" required>
+              <option value="" disabled selected>Choisir un domaine...</option>
+              <option value="TEMPERATURE">Thermique</option>
+              <option value="PRESSION">Pression</option>
+              <option value="ELECTRICITE">Électricité</option>
+            </select>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-link" (click)="closeModal()">Ignorer</button>
+            <button type="submit" class="btn-confirm" [disabled]="!techForm.form.valid">
+              <span>Créer le profil</span>
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 </div>

@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MaterialModule } from './material.module';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-root',

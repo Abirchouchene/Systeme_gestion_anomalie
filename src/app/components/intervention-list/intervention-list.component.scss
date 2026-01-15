@@ -1,53 +1,184 @@
-.card-header {
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-  border: none;
-  padding: 1rem 1.5rem;
+/* ===============================
+   GLOBAL
+================================ */
+:host {
+  display: block;
+  background: linear-gradient(180deg, #f8f9fc 0%, #eef1f7 100%);
+  min-height: 100vh;
 }
 
+h3 {
+  letter-spacing: 0.3px;
+}
+
+/* ===============================
+   CARDS
+================================ */
+.card {
+  border-radius: 14px;
+  transition: all 0.25s ease;
+  background: #ffffff;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+/* ===============================
+   HEADER
+================================ */
+.page-title {
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+/* ===============================
+   STATISTICS CARDS
+================================ */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.45em 0.7em;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bg-warning {
+  background: linear-gradient(135deg, #f6c23e, #f4b619) !important;
+}
+
+.bg-info {
+  background: linear-gradient(135deg, #36b9cc, #2c9faf) !important;
+}
+
+.bg-success {
+  background: linear-gradient(135deg, #1cc88a, #17a673) !important;
+}
+
+.bg-secondary {
+  background: linear-gradient(135deg, #858796, #6c757d) !important;
+}
+
+/* ===============================
+   FILTERS
+================================ */
+.form-select {
+  border-radius: 10px;
+  border: 1px solid #dee2e6;
+  transition: all 0.2s ease;
+
+  &:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 0.15rem rgba(78, 115, 223, 0.25);
+  }
+}
+
+/* ===============================
+   TABLE
+================================ */
 .table {
-  th {
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.875rem;
-    letter-spacing: 0.5px;
-    color: #6c757d;
-    border-bottom: 2px solid #dee2e6;
+  margin-bottom: 0;
+
+  thead {
+    background: #f8f9fc;
+
+    th {
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      color: #6c757d;
+      border-bottom: none;
+    }
   }
 
   tbody tr {
     transition: all 0.2s ease;
 
     &:hover {
-      background-color: #f8f9fa;
+      background: #f8f9fc;
       transform: scale(1.01);
     }
   }
+
+  td {
+    vertical-align: middle;
+    font-size: 0.9rem;
+  }
 }
 
-.avatar-circle {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 0.875rem;
+/* ===============================
+   ACTION SELECT
+================================ */
+.form-select-sm {
+  font-size: 0.8rem;
+  padding: 0.35rem 1.6rem 0.35rem 0.5rem;
+  border-radius: 999px;
+  background-color: #f1f3f7;
 }
 
-.status-badge {
+/* ===============================
+   BUTTONS
+================================ */
+.btn-outline-primary {
+  border-radius: 999px;
   font-weight: 600;
-  padding: 0.5em 1em;
-  font-size: 0.875rem;
-  text-transform: uppercase;
-}
-
-.btn-sm {
-  transition: all 0.2s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, #4e73df, #224abe);
+    color: #fff;
+  }
+}
+
+.btn-primary {
+  border-radius: 999px;
+  background: linear-gradient(135deg, #4e73df, #224abe);
+  border: none;
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+}
+
+/* ===============================
+   LOADING
+================================ */
+.spinner-border {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+/* ===============================
+   EMPTY STATE
+================================ */
+.empty-state {
+  padding: 3rem;
+  color: #858796;
+
+  i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+}
+
+/* ===============================
+   RESPONSIVE
+================================ */
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.85rem;
+  }
+
+  .form-select-sm {
+    width: 100%;
   }
 }

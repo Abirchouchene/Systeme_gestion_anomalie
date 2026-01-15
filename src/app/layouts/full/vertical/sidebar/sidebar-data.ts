@@ -24,11 +24,7 @@ export const navItems: NavItem[] = [
         iconName: 'point',
         route: '/apps/interventions/list',
       },
-      {
-        displayName: 'Par statut',
-        iconName: 'point',
-        route: '/apps/interventions/status',
-      },
+      
       {
         displayName: 'Alertes liées',
         iconName: 'point',
@@ -48,11 +44,7 @@ export const navItems: NavItem[] = [
         iconName: 'point',
         route: '/apps/techniciens/list',
       },
-      {
-        displayName: 'Techniciens disponibles',
-        iconName: 'point',
-        route: '/apps/techniciens/disponibles',
-      },
+      
     ],
   },
 
@@ -69,16 +61,7 @@ export const navItems: NavItem[] = [
         iconName: 'point',
         route: '/apps/alertes/list',
       },
-      {
-        displayName: 'Alertes récentes',
-        iconName: 'point',
-        route: '/apps/alertes/recentes',
-      },
-      {
-        displayName: 'Par gravité',
-        iconName: 'point',
-        route: '/apps/alertes/gravite',
-      },
+      
     ],
   },
 
@@ -93,11 +76,7 @@ export const navItems: NavItem[] = [
         iconName: 'point',
         route: '/apps/mesures/source',
       },
-      {
-        displayName: 'Par indicateur',
-        iconName: 'point',
-        route: '/apps/mesures/indicateur',
-      },
+    
     ],
   },
 ];

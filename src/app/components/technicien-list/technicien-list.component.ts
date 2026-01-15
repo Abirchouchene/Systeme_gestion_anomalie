@@ -86,6 +86,14 @@ export class TechnicienListComponent implements OnInit {
       this.resetForm();
     }
   }
+  openModal(): void {
+    this.showAddForm = true;
+  }
+
+  closeModal(): void {
+    this.showAddForm = false;
+    this.resetForm();
+  }
 
   onDisponibiliteChange(event: any): void {
     this.nouveauTechnicien.disponibilite = event.target.value === 'true';

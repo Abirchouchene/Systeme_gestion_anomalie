@@ -4,5 +4,5 @@ export interface Intervention {
   technicienId: number;
   datePlanifiee: string; // LocalDate
   statut: string;
-  
+
 }
